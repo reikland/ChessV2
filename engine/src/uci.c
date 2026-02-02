@@ -12,11 +12,15 @@
 
 static Position POS;
 static SearchCtx CTX;
+static int LAST_FROM = -1;
+static int LAST_TO = -1;
 
 static const char *STARTPOS_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
 static void set_startpos(Position *p) {
     pos_from_fen(p, STARTPOS_FEN);
+    LAST_FROM = -1;
+    LAST_TO = -1;
 }
 
 static void move_to_uci(Move mv, char *out) {
@@ -76,12 +80,17 @@ static void parse_position(Position *pos, char *line) {
             }
         }
         pos_from_fen(pos, fen);
+        LAST_FROM = -1;
+        LAST_TO = -1;
     }
 
     if (token && !strcmp(token, "moves")) {
         while ((token = strtok(NULL, " \n")) != NULL) {
             Move mv = uci_move_from_str(pos, token);
-            if (mv) make_move(pos, mv);
+            if (mv && make_move(pos, mv)) {
+                LAST_FROM = M_FROM(mv);
+                LAST_TO = M_TO(mv);
+            }
         }
     }
 }
@@ -131,6 +140,8 @@ void uci_loop(void) {
             set_startpos(&POS);
         } else if (!strncmp(line, "position", 8)) {
             parse_position(&POS, line);
+            pos_print_pretty(&POS, LAST_FROM, LAST_TO);
+            fflush(stdout);
         } else if (!strncmp(line, "go", 2)) {
             SearchLimits lim;
             parse_go(&lim, line);
@@ -139,6 +150,9 @@ void uci_loop(void) {
             if (best) move_to_uci(best, buf);
             else strcpy(buf, "0000");
             printf("bestmove %s\n", buf);
+            fflush(stdout);
+        } else if (!strncmp(line, "show", 4) || !strncmp(line, "display", 7)) {
+            pos_print_pretty(&POS, LAST_FROM, LAST_TO);
             fflush(stdout);
         } else if (!strncmp(line, "perft", 5)) {
             int depth = atoi(line + 6);
