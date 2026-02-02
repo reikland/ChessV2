@@ -34,3 +34,4 @@ typedef struct {
 bool pos_from_fen(Position *pos, const char *fen);
 void pos_update_occupancy(Position *pos);
 void pos_compute_key(Position *pos);
+void pos_print_pretty(const Position *pos, int last_from, int last_to);

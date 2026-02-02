@@ -41,6 +41,52 @@ void pos_compute_key(Position *pos) {
     pos->key = key;
 }
 
+static char piece_to_char(Piece p) {
+    switch (p) {
+        case WP: return 'P';
+        case WN: return 'N';
+        case WB: return 'B';
+        case WR: return 'R';
+        case WQ: return 'Q';
+        case WK: return 'K';
+        case BP: return 'p';
+        case BN: return 'n';
+        case BB: return 'b';
+        case BR: return 'r';
+        case BQ: return 'q';
+        case BK: return 'k';
+        default: return '.';
+    }
+}
+
+void pos_print_pretty(const Position *pos, int last_from, int last_to) {
+    printf("\n");
+    printf("  +---+---+---+---+---+---+---+---+\n");
+    for (int rank = 7; rank >= 0; --rank) {
+        printf("%d |", rank + 1);
+        for (int file = 0; file < 8; ++file) {
+            int sq = rank * 8 + file;
+            char piece = piece_to_char(pos->piece_on[sq]);
+            bool highlight = (sq == last_from || sq == last_to);
+            if (highlight) {
+                printf("[%c]|", piece);
+            } else {
+                printf(" %c |", piece);
+            }
+        }
+        printf("\n");
+        printf("  +---+---+---+---+---+---+---+---+\n");
+    }
+    printf("    a   b   c   d   e   f   g   h\n");
+    printf("Side: %s | Halfmove: %u | Castling: %c%c%c%c | EP: %s\n",
+           pos->side == WHITE ? "White" : "Black",
+           pos->halfmove_clock,
+           (pos->castle_rights & (1u << 0)) ? 'K' : '-',
+           (pos->castle_rights & (1u << 1)) ? 'Q' : '-',
+           (pos->castle_rights & (1u << 2)) ? 'k' : '-',
+           (pos->castle_rights & (1u << 3)) ? 'q' : '-',
+           pos->ep_sq >= 0 ? "set" : "none");
+}
 static int parse_piece(char c) {
     switch (c) {
         case 'P': return WP;
